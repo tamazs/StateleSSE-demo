@@ -69,11 +69,11 @@ public class Program
 
         services.AddInMemorySseBackplane();
 
-        services.AddSingleton<IConnectionMultiplexer>(_ =>
+        services.AddSingleton<IConnectionMultiplexer>(sp =>
         {
-            var config = ConfigurationOptions.Parse(
-                "frankfurt-keyvalue.render.com:6379,user=red-d5tia7npm1nc739csn40,password=f0UwYPpRxHH2BLVBXkBCEhFOnW1caOzp,ssl=true,abortConnect=false"
-            );
+            var appOptions = sp.GetRequiredService<AppOptions>();
+            
+            var config = ConfigurationOptions.Parse(appOptions.RenderConnectionString);
             config.AbortOnConnectFail = false;
             return ConnectionMultiplexer.Connect(config);
         });
