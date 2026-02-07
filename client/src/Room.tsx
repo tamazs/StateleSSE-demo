@@ -26,6 +26,10 @@ export function Room() {
     useEffect(() => {
         if (!params.roomId) return;
 
+        stream.on<PokeResponseDto>("message", "PokeResponseDto", (dto) => {
+            alert("you have been poked by: "+dto.pokedBy)
+        })
+
         const unsubUsers = stream.on<any>(
             params.roomId,
             "JoinGroupBroadcast",
@@ -146,7 +150,8 @@ export function Room() {
                             <button
                                 className="btn btn-ghost btn-sm"
                                 onClick={() => {
-                                    chatClient.poke(m.connectionId).then(r => {
+                                    if (!m.connectionId) return; // guard for undefined
+                                    chatClient.poke({ connectionIdToPoke: m.connectionId }).then(r => {
                                         alert('poke sent')
                                     })
                                 }}

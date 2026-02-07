@@ -174,11 +174,11 @@ public class RealtimeController(
     [Authorize]
     [HttpPost("poke")]
     [ProducesResponseType(typeof(PokeResponseDto), 200)]
-    public async Task Poke(PokeRequestDto dto)
+    public async Task Poke([FromBody] PokeRequestDto dto)
     {
         var userId = CurrentUserId!;
         var u = await dbContext.Users.FirstOrDefaultAsync(u => u.UserId == userId);
-        var name = u!.Username ?? "Anonymous";
+        var name = u?.Username ?? "Anonymous";
 
         await backplane.Clients.SendToClientAsync(dto.connectionIdToPoke, new PokeResponseDto(name));
     }
