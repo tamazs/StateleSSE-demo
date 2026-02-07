@@ -1,0 +1,162 @@
+import {useStream} from "./useStream.tsx";
+import {useEffect, useState} from "react";
+import {
+    type MessageResponseDto, type ChatRoom,
+    type SendGroupMessageRequestDto,
+    type PokeResponseDto,
+    type UserLeftResponseDto, type ConnectionIdAndUserName
+} from "./generated-ts-client.ts";
+import {chatClient} from "./chatClient.ts";
+import {useNavigate, useParams} from "react-router";
+export type RoomParams = {
+    roomId: string;
+}
+
+export function Room() {
+    const stream = useStream();
+    const navigate = useNavigate()
+    const params = useParams<RoomParams>();
+    const [messages, setMessages] = useState<MessageResponseDto[]>([]);
+    const [members, setMembers] = useState<ConnectionIdAndUserName[]>([]);
+    const [room, setRoom] = useState<ChatRoom | undefined>(undefined)
+    const [message, setMessage] = useState<SendGroupMessageRequestDto>({
+        groupId: params.roomId,
+        message: ""
+    })
+    useEffect(() => {
+        if (!params.roomId) return;
+
+        const unsubUsers = stream.on<any>(
+            params.roomId,
+            "JoinGroupBroadcast",
+            (dto) => {
+                setMembers(dto.connectedUsers);
+            }
+        );
+
+        const unsubJoinMsg = stream.on<any>(
+            params.roomId,
+            "UserJoined",
+            (dto) => {
+                setMessages(prev => [
+                    ...prev,
+                    {
+                        user: "System",
+                        message: dto.message
+                    }
+                ]);
+            }
+        );
+
+        const unsubMsg = stream.on<MessageResponseDto>(
+            params.roomId,
+            "MessageResponseDto",
+            (dto) => {
+                setMessages(prev => [...prev, dto]);
+            }
+        );
+
+        return () => {
+            unsubUsers();
+            unsubJoinMsg();
+            unsubMsg();
+        };
+    }, [params.roomId]);
+
+    useEffect(() => {
+        if (!stream.connectionId)
+            return;
+        chatClient.joinGroup({connectionId: stream.connectionId, group: params.roomId})
+            .then(r => {
+                setRoom(r.chatroom)
+            }).catch(e => {
+            navigate("/")
+        })
+    }, [stream.connectionId, params.roomId]);
+
+    if(!room)
+        return <div className="loading">Loading room...</div>
+
+
+    return (
+        <div className="room-container">
+            <div className="chat-panel">
+                <div className="chat-header">
+                    <h2>{room.name!}</h2>
+                </div>
+
+                <div className="messages-container">
+                    {messages.length === 0 ? (
+                        <div className="empty-state">
+                            <p>No messages yet. Start the conversation!</p>
+                        </div>
+                    ) : (
+                        messages.map((m, i) => (
+                            <div className="message" key={i}>
+                                <div className="message-author">{m.user || 'Anonymous'}</div>
+                                <div className="message-content">{m.message}</div>
+                            </div>
+                        ))
+                    )}
+                </div>
+
+                <div className="chat-input-container">
+                    <div className="chat-input-form">
+                        <input
+                            className="input"
+                            placeholder="Type a message..."
+                            onChange={e => {
+                                setMessage({
+                                    ...message, message: e.target.value
+                                })
+                            }}
+                            value={message.message}
+                            onKeyDown={e => {
+                                if (e.key === 'Enter' && message.message?.trim()) {
+                                    chatClient.send(message)
+                                }
+                            }}
+                        />
+                        <button
+                            className="btn btn-primary"
+                            onClick={() => {
+                                chatClient.send(message)
+                            }}
+                        >
+                            Send
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div className="members-panel">
+                <div className="members-header">
+                    <h3>Members</h3>
+                    <div className="members-count">{members.length} online</div>
+                </div>
+                <div className="members-list">
+                    {members.map(m => (
+                        <div className="member-item" key={m.connectionId}>
+                            <div className="member-info">
+                                <div className="member-avatar">
+                                    {(m.userName || 'A').charAt(0).toUpperCase()}
+                                </div>
+                                <span className="member-name">{m.userName || 'Anonymous'}</span>
+                            </div>
+                            <button
+                                className="btn btn-ghost btn-sm"
+                                onClick={() => {
+                                    chatClient.poke(m.connectionId).then(r => {
+                                        alert('poke sent')
+                                    })
+                                }}
+                            >
+                                Poke
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+}

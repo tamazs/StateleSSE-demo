@@ -133,7 +133,7 @@ public class Program
         {
             await backplane.Clients.SendToGroupsAsync(
                 e.Groups,
-                new { message = "Someone disconnected!" }
+                new UserLeftResponseDto(e.ConnectionId)
             );
         };
         
@@ -142,3 +142,5 @@ public class Program
         app.Run();
     }
 }
+
+public record UserLeftResponseDto(string ConnectionId) : BaseResponseDto;

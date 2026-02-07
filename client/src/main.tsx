@@ -1,12 +1,14 @@
 import {createRoot} from 'react-dom/client'
-import App from './App.tsx'
 import {StreamProvider} from "./useStream.tsx";
+import {BASE_URL} from "./utils/BASE_URL.ts";
+import Routes from "./Routes.tsx";
+import './styles.css';
 
 createRoot(document.getElementById('root')!).render(
     <StreamProvider config={{
-        connectEvent: 'ConnectionResponse',
-        urlForStreamEndpoint: 'http://localhost:5026/api/realtime/connect'
+        urlForStreamEndpoint: `${BASE_URL}/api/realtime/connect`,
+        connectEvent: "ConnectionResponse",
     }}>
-        <App/>
-    </StreamProvider>,
+        <Routes/>
+    </StreamProvider>
 )

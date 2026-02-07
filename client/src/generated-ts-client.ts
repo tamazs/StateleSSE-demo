@@ -135,7 +135,7 @@ export class RealtimeClient {
         return Promise.resolve<ConnectionResponse>(null as any);
     }
 
-    join(request: JoinGroupRequest): Promise<JoinGroupResponse> {
+    joinGroup(request: JoinGroupRequest): Promise<JoinGroupResponse> {
         let url_ = this.baseUrl + "/api/realtime/join";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -151,11 +151,11 @@ export class RealtimeClient {
         };
 
         return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processJoin(_response);
+            return this.processJoinGroup(_response);
         });
     }
 
-    protected processJoin(response: Response): Promise<JoinGroupResponse> {
+    protected processJoinGroup(response: Response): Promise<JoinGroupResponse> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
@@ -163,6 +163,18 @@ export class RealtimeClient {
             let result200: any = null;
             result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as JoinGroupResponse;
             return result200;
+            });
+        } else if (status === 202) {
+            return response.text().then((_responseText) => {
+            let result202: any = null;
+            result202 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as JoinGroupBroadcast;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result202);
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            let result400: any = null;
+            result400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as UserLeftResponseDto;
+            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
@@ -209,6 +221,113 @@ export class RealtimeClient {
         return Promise.resolve<ChatRoom>(null as any);
     }
 
+    getGroupMembers(groupId: string | undefined): Promise<User[]> {
+        let url_ = this.baseUrl + "/api/realtime/getmembers?";
+        if (groupId === null)
+            throw new globalThis.Error("The parameter 'groupId' cannot be null.");
+        else if (groupId !== undefined)
+            url_ += "groupId=" + encodeURIComponent("" + groupId) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetGroupMembers(_response);
+        });
+    }
+
+    protected processGetGroupMembers(response: Response): Promise<User[]> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as User[];
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<User[]>(null as any);
+    }
+
+    getOnlineGroupMembers(groupId: string | undefined): Promise<User[]> {
+        let url_ = this.baseUrl + "/api/realtime/getonlinemembers?";
+        if (groupId === null)
+            throw new globalThis.Error("The parameter 'groupId' cannot be null.");
+        else if (groupId !== undefined)
+            url_ += "groupId=" + encodeURIComponent("" + groupId) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "POST",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetOnlineGroupMembers(_response);
+        });
+    }
+
+    protected processGetOnlineGroupMembers(response: Response): Promise<User[]> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as User[];
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<User[]>(null as any);
+    }
+
+    getRooms(): Promise<ChatRoom[]> {
+        let url_ = this.baseUrl + "/api/realtime/GetRooms";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetRooms(_response);
+        });
+    }
+
+    protected processGetRooms(response: Response): Promise<ChatRoom[]> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as ChatRoom[];
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ChatRoom[]>(null as any);
+    }
+
     send(request: SendGroupMessageRequestDto): Promise<MessageResponseDto> {
         let url_ = this.baseUrl + "/api/realtime/send";
         url_ = url_.replace(/[?&]$/, "");
@@ -246,38 +365,41 @@ export class RealtimeClient {
         return Promise.resolve<MessageResponseDto>(null as any);
     }
 
-    leave(request: JoinGroupRequest): Promise<void> {
-        let url_ = this.baseUrl + "/api/realtime/leave";
+    poke(dto: PokeRequestDto): Promise<PokeResponseDto> {
+        let url_ = this.baseUrl + "/api/realtime/poke";
         url_ = url_.replace(/[?&]$/, "");
 
-        const content_ = JSON.stringify(request);
+        const content_ = JSON.stringify(dto);
 
         let options_: RequestInit = {
             body: content_,
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
+                "Accept": "application/json"
             }
         };
 
         return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processLeave(_response);
+            return this.processPoke(_response);
         });
     }
 
-    protected processLeave(response: Response): Promise<void> {
+    protected processPoke(response: Response): Promise<PokeResponseDto> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
-            return;
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as PokeResponseDto;
+            return result200;
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<void>(null as any);
+        return Promise.resolve<PokeResponseDto>(null as any);
     }
 }
 
@@ -334,8 +456,21 @@ export interface ConnectionResponse extends BaseResponseDto {
     connectionId?: string;
 }
 
+export interface JoinGroupBroadcast extends BaseResponseDto {
+    connectedUsers?: ConnectionIdAndUserName[];
+}
+
+export interface ConnectionIdAndUserName {
+    connectionId?: string;
+    userName?: string;
+}
+
 export interface JoinGroupResponse extends BaseResponseDto {
-    members?: string[];
+    chatroom?: ChatRoom;
+}
+
+export interface UserLeftResponseDto extends BaseResponseDto {
+    connectionId?: string;
 }
 
 export interface JoinGroupRequest {
@@ -351,6 +486,14 @@ export interface MessageResponseDto extends BaseResponseDto {
 export interface SendGroupMessageRequestDto {
     message?: string;
     groupId?: string;
+}
+
+export interface PokeResponseDto extends BaseResponseDto {
+    pokedBy?: string;
+}
+
+export interface PokeRequestDto {
+    connectionIdToPoke?: string;
 }
 
 export class ApiException extends Error {

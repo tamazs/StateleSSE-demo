@@ -95,7 +95,7 @@
         "tags": [
           "Realtime"
         ],
-        "operationId": "Realtime_Join",
+        "operationId": "Realtime_JoinGroup",
         "requestBody": {
           "x-name": "request",
           "content": {
@@ -109,12 +109,32 @@
           "x-position": 1
         },
         "responses": {
+          "202": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JoinGroupBroadcast"
+                }
+              }
+            }
+          },
           "200": {
             "description": "",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/JoinGroupResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserLeftResponseDto"
                 }
               }
             }
@@ -145,6 +165,95 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ChatRoom"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/realtime/getmembers": {
+      "get": {
+        "tags": [
+          "Realtime"
+        ],
+        "operationId": "Realtime_GetGroupMembers",
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/User"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/realtime/getonlinemembers": {
+      "post": {
+        "tags": [
+          "Realtime"
+        ],
+        "operationId": "Realtime_GetOnlineGroupMembers",
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/User"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/realtime/GetRooms": {
+      "get": {
+        "tags": [
+          "Realtime"
+        ],
+        "operationId": "Realtime_GetRooms",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChatRoom"
+                  }
                 }
               }
             }
@@ -184,18 +293,18 @@
         }
       }
     },
-    "/api/realtime/leave": {
+    "/api/realtime/poke": {
       "post": {
         "tags": [
           "Realtime"
         ],
-        "operationId": "Realtime_Leave",
+        "operationId": "Realtime_Poke",
         "requestBody": {
-          "x-name": "request",
+          "x-name": "dto",
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/JoinGroupRequest"
+                "$ref": "#/components/schemas/PokeRequestDto"
               }
             }
           },
@@ -204,7 +313,14 @@
         },
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PokeResponseDto"
+                }
+              }
+            }
           }
         }
       }
@@ -373,6 +489,37 @@
           }
         }
       },
+      "JoinGroupBroadcast": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BaseResponseDto"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "connectedUsers": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ConnectionIdAndUserName"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "ConnectionIdAndUserName": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "connectionId": {
+            "type": "string"
+          },
+          "userName": {
+            "type": "string"
+          }
+        }
+      },
       "JoinGroupResponse": {
         "allOf": [
           {
@@ -382,11 +529,24 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
-              "members": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
+              "chatroom": {
+                "$ref": "#/components/schemas/ChatRoom"
+              }
+            }
+          }
+        ]
+      },
+      "UserLeftResponseDto": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BaseResponseDto"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "connectionId": {
+                "type": "string"
               }
             }
           }
@@ -432,6 +592,31 @@
             "type": "string"
           },
           "groupId": {
+            "type": "string"
+          }
+        }
+      },
+      "PokeResponseDto": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BaseResponseDto"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "pokedBy": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "PokeRequestDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "connectionIdToPoke": {
             "type": "string"
           }
         }
